@@ -1,0 +1,45 @@
+
+Name	Elenor Legros
+Username	elenor30@ethereal.email – this account can not be used for inbound emails 
+Password	mG7wFEh7a2kFwAgMFS
+
+Nodemailer configuration
+const transporter = nodemailer.createTransport({
+    host: 'smtp.ethereal.email',
+    port: 587,
+    auth: {
+        user: 'elenor30@ethereal.email',
+        pass: 'mG7wFEh7a2kFwAgMFS'
+    }
+});
+PHPMailer configuration
+$mail = new PHPMailer(true);
+$mail->isSMTP();
+$mail->Host = 'smtp.ethereal.email';
+$mail->SMTPAuth = true;
+$mail->Username = 'elenor30@ethereal.email';
+$mail->Password = 'mG7wFEh7a2kFwAgMFS';
+$mail->SMTPSecure = 'tls';
+$mail->Port = 587;
+SwiftMailer configuration
+$transport = (new Swift_SmtpTransport('smtp.ethereal.email', 587, 'tls'))
+  ->setUsername('elenor30@ethereal.email')
+  ->setPassword('mG7wFEh7a2kFwAgMFS');
+SMTP configuration
+Host	smtp.ethereal.email
+Port	587
+Security	STARTTLS
+Username	elenor30@ethereal.email
+Password	mG7wFEh7a2kFwAgMFS
+IMAP configuration
+Host	imap.ethereal.email
+Port	993
+Security	TLS
+Username	elenor30@ethereal.email
+Password	mG7wFEh7a2kFwAgMFS
+POP3 configuration
+Host	pop3.ethereal.email
+Port	995
+Security	TLS
+Username	elenor30@ethereal.email
+Password	mG7wFEh7a2kFwAgMFS

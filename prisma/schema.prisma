@@ -1,0 +1,554 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User Authentication (Consolidated and Corrected for Onboarding)
+model User {
+  id                 String           @id @default(cuid())
+  email              String           @unique
+  emailVerified      DateTime?
+  password           String? // Kept optional for passwordless flow
+  displayName        String? // Renamed from 'name'
+  image              String?
+  role               UserRole         @default(MEMBER)
+  onboardingStatus   OnboardingStatus @default(NOT_STARTED)
+
+  // Fields from original schema, no longer in onboarding form
+  timezone           String           @default("UTC")
+  preferredLanguage  String           @default("en")
+
+  // Security and Status Fields
+  lastLogin          DateTime?
+  loginCount         Int              @default(0)
+  isVerified         Boolean          @default(false)
+  isBanned           Boolean          @default(false)
+  bannedReason       String?
+  bannedUntil        DateTime?
+  security           UserSecurity?
+  
+  // Subscription
+  stripeCustomerId   String?          @unique
+  subscription       Subscription?
+
+  // Relations
+  accounts           Account[]
+  sessions           Session[]
+  profile            Profile?
+  assessments        Assessment[]
+  habits             Habit[]
+  goals              Goal[]
+  courseProgress     CourseProgress[]
+  journalEntries     JournalEntry[]
+  dashboardWidgets   DashboardWidget[]
+  notifications      Notification[]
+  achievements       UserAchievement[]
+  forumPosts         ForumPost[]
+  forumComments      ForumComment[]
+  messages           Message[]
+
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Profile {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // ---NEW ONBOARDING FIELDS---
+  currentRole        String?
+  biggestChallenge   String?
+  motivationLevel    Int?
+  developmentStage   String?
+
+  // ---RENAMED FIELD---
+  focusAreas         String[] // Renamed from 'interests' to store selected outcomes
+
+  // ---UNCHANGED---
+  currentLevel       Int      @default(1)
+  experiencePoints   Int      @default(0)
+  streakDays         Int      @default(0)
+  lastLoginDate      DateTime?
+  dailyGoalMinutes   Int      @default(30)
+  reminderTime       String?
+  weeklyGoals        Json?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+// Subscription Management
+model Subscription {
+  id                   String             @id @default(cuid())
+  userId               String             @unique
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  stripeSubscriptionId String             @unique
+  stripePriceId        String
+  status               SubscriptionStatus
+  tier                 SubscriptionTier
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  cancelAtPeriodEnd    Boolean            @default(false)
+
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+}
+
+// Content Management
+model Course {
+  id             String           @id @default(cuid())
+  title          String
+  description    String
+  thumbnail      String?
+  category       String
+  difficulty     Difficulty
+  estimatedHours Int
+  price          Float            @default(0)
+  published      Boolean          @default(false)
+
+  modules        Module[]
+  enrollments    CourseProgress[]
+
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+model Module {
+  id          String   @id @default(cuid())
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  orderIndex  Int
+
+  lessons     Lesson[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Lesson {
+  id         String         @id @default(cuid())
+  moduleId   String
+  module     Module         @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  title      String
+  content    String // Rich text/HTML content
+  videoUrl   String?
+  duration   Int? // in minutes
+  orderIndex Int
+
+  resources  Resource[]
+  progress   LessonProgress[]
+
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+}
+
+model Resource {
+  id       String     @id @default(cuid())
+  lessonId String
+  lesson   Lesson     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  title    String
+  type     ResourceType
+  url      String
+
+  createdAt DateTime   @default(now())
+}
+
+// Progress Tracking
+model CourseProgress {
+  id               String           @id @default(cuid())
+  userId           String
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId         String
+  course           Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  completedLessons LessonProgress[]
+  progressPercent  Float            @default(0)
+  startedAt        DateTime         @default(now())
+  completedAt      DateTime?
+
+  @@unique([userId, courseId])
+}
+
+model LessonProgress {
+  id               String         @id @default(cuid())
+  courseProgressId String
+  courseProgress   CourseProgress @relation(fields: [courseProgressId], references: [id], onDelete: Cascade)
+  lessonId         String
+  lesson           Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  completed        Boolean        @default(false)
+  watchTime        Int            @default(0) // in seconds
+  completedAt      DateTime?
+
+  @@unique([courseProgressId, lessonId])
+}
+
+// Assessment System
+model Assessment {
+  id          String         @id @default(cuid())
+  userId      String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        AssessmentType
+  title       String
+  questions   Json // Store questions and answers as JSON
+  results     Json // Store calculated results
+  score       Float?
+
+  completedAt DateTime       @default(now())
+}
+
+// Habit Tracking
+model Habit {
+  id          String         @id @default(cuid())
+  userId      String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  category    String
+  frequency   HabitFrequency
+  targetCount Int            @default(1)
+  color       String         @default("#3B82F6")
+  icon        String?
+  active      Boolean        @default(true)
+
+  entries     HabitEntry[]
+
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model HabitEntry {
+  id        String   @id @default(cuid())
+  habitId   String
+  habit     Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  date      DateTime
+  completed Boolean  @default(false)
+  notes     String?
+
+  @@unique([habitId, date])
+}
+
+// Goal Management
+model Goal {
+  id          String     @id @default(cuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  category    String
+  targetDate  DateTime
+  status      GoalStatus @default(IN_PROGRESS)
+  progress    Float      @default(0)
+
+  milestones  Milestone[]
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Milestone {
+  id          String    @id @default(cuid())
+  goalId      String
+  goal        Goal      @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  title       String
+  targetDate  DateTime
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+
+  orderIndex  Int
+}
+
+// Journal System
+model JournalEntry {
+  id      String   @id @default(cuid())
+  userId  String
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title   String?
+  content String
+  mood    Int? // 1-5 scale
+  tags    String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Dashboard Widgets
+model DashboardWidget {
+  id        String     @id @default(cuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      WidgetType
+  position  Json // Store x, y, width, height
+  settings  Json? // Widget-specific settings
+  visible   Boolean    @default(true)
+
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+// Notifications
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      NotificationType
+  read      Boolean          @default(false)
+  actionUrl String?
+
+  createdAt DateTime         @default(now())
+}
+
+// Achievements/Gamification
+model Achievement {
+  id          String            @id @default(cuid())
+  name        String            @unique
+  description String
+  icon        String
+  points      Int
+  category    String
+  requirement Json // Store requirement logic as JSON
+
+  users       UserAchievement[]
+
+  createdAt   DateTime          @default(now())
+}
+
+model UserAchievement {
+  id            String      @id @default(cuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+
+  unlockedAt    DateTime    @default(now())
+
+  @@unique([userId, achievementId])
+}
+
+// Community Features
+model ForumCategory {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  description String?
+  icon        String?
+  orderIndex  Int
+
+  posts       ForumPost[]
+
+  createdAt   DateTime    @default(now())
+}
+
+model ForumPost {
+  id         String         @id @default(cuid())
+  categoryId String
+  category   ForumCategory  @relation(fields: [categoryId], references: [id])
+  authorId   String
+  author     User           @relation(fields: [authorId], references: [id])
+  title      String
+  content    String
+  pinned     Boolean        @default(false)
+  locked     Boolean        @default(false)
+  views      Int            @default(0)
+
+  comments   ForumComment[]
+
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+}
+
+model ForumComment {
+  id       String    @id @default(cuid())
+  postId   String
+  post     ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorId String
+  author   User      @relation(fields: [authorId], references: [id])
+  content  String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Direct Messaging
+model Message {
+  id         String  @id @default(cuid())
+  senderId   String
+  sender     User    @relation(fields: [senderId], references: [id])
+  receiverId String
+  content    String
+  read       Boolean @default(false)
+
+  createdAt  DateTime @default(now())
+}
+
+// User security settings
+model UserSecurity {
+  id                 String    @id @default(cuid())
+  userId             String    @unique
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  twoFactorEnabled   Boolean   @default(false)
+  twoFactorSecret    String? // Encrypted
+  backupCodes        String[] // Encrypted backup codes
+
+  loginAlerts        Boolean   @default(true)
+  sessionTimeout     Int       @default(604800) // 7 days in seconds
+
+  trustedDevices     Json? // Store trusted device fingerprints
+  lastPasswordChange DateTime?
+
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
+
+// Failed login attempts tracking
+model LoginAttempt {
+  id          String    @id @default(cuid())
+  identifier  String    @unique // Email or IP
+  attempts    Int       @default(1)
+  lockedUntil DateTime?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([lockedUntil])
+}
+
+// Security audit logging
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  ipAddress String?
+  userAgent String?
+  success   Boolean
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+
+// Enums
+enum UserRole {
+  ADMIN
+  MODERATOR
+  MEMBER
+  TRIAL
+  BANNED
+}
+
+enum OnboardingStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+  PAUSED
+  TRIAL
+}
+
+enum SubscriptionTier {
+  FREE
+  BASIC
+  PREMIUM
+  ENTERPRISE
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum ResourceType {
+  PDF
+  VIDEO
+  AUDIO
+  LINK
+  DOWNLOAD
+}
+
+enum AssessmentType {
+  PERSONALITY
+  SKILLS
+  GOALS
+  LEARNING_STYLE
+  PROGRESS
+}
+
+enum HabitFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum GoalStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+enum WidgetType {
+  PROGRESS_TRACKER
+  HABIT_TRACKER
+  QUICK_STATS
+  CALENDAR
+  RECENT_ACTIVITY
+  GOALS
+  QUOTES
+  NOTES
+  CHARTS
+}
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+  ACHIEVEMENT
+  REMINDER
+}
