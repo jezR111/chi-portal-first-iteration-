@@ -1,31 +1,13 @@
-// src/components/providers/Providers.tsx
+// src/components/providers/ThemeProvider.tsx
 'use client'
 
-import { AuthProvider } from '@/components/providers/AuthProvider'
-import { ThemeProvider } from '@/components/providers/ThemeProvider'
-import { ToastProvider } from '@/components/providers/ToastProvider'
-
-interface ProvidersProps {
-  children: React.ReactNode
-}
+import { ThemeProvider as NextThemesProvider } from 'next-themes'
+import { type ThemeProviderProps } from 'next-themes/dist/types'
 
 /**
- * Global providers wrapper
- * Combines all context providers in the correct order
+ * Theme provider wrapper for next-themes
+ * Handles dark/light mode switching with system preference support
  */
-export function Providers({ children }: ProvidersProps) {
-  return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange
-    >
-      <AuthProvider>
-        <ToastProvider>
-          {children}
-        </ToastProvider>
-      </AuthProvider>
-    </ThemeProvider>
-  )
+export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
+  return <NextThemesProvider {...props}>{children}</NextThemesProvider>
 }
