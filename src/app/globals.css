@@ -1,11 +1,12 @@
 /* src/app/globals.css */
 
-/* Tailwind v4 style import */
+/* Tailwind v4 import */
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Cal+Sans&display=swap');
 
+/* Display font */
+@import url('https://fonts.googleapis.com/css2?family=Cal+Sans:wght@600;700&display=swap');
 
-/* --- Base CSS Tokens (CSS variables) --- */
+/* -------------------- Base tokens & element defaults -------------------- */
 @layer base {
   :root {
     /* Premium Color Variables */
@@ -39,14 +40,13 @@
 
     --radius: 1rem;
 
-    /* Gradients */
-    --gradient-angle: 135deg;
+    /* Gradients (token defaults) */
     --gradient-primary-start: #667eea;
-    --gradient-primary-end: #764ba2;
-    --gradient-yin-start: #5a15f0;
-    --gradient-yin-end: #250971;
-    --gradient-yang-start: #ff740a;
-    --gradient-yang-end: #ff5900;
+    --gradient-primary-end:   #764ba2;
+    --gradient-yin-start:     #5a15f0;
+    --gradient-yin-end:       #250971;
+    --gradient-yang-start:    #ff740a;
+    --gradient-yang-end:      #ff5900;
   }
 
   .dark {
@@ -70,106 +70,118 @@
 
     /* Dark gradients */
     --gradient-primary-start: #4c54d2;
-    --gradient-primary-end: #5e3a85;
+    --gradient-primary-end:   #5e3a85;
   }
-}
 
-/* --- Base element styles --- */
-@layer base {
-  *, ::before, ::after {
-    border-color: hsl(var(--border));
-  }
-}
+  /* set border color directly (don’t @apply border-border) */
+  *, ::before, ::after { border-color: hsl(var(--border)); }
 
+  /* use tokens directly (don’t @apply bg-background/text-foreground) */
   body {
-    @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-inter), system-ui, sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* Headings: Cal Sans */
   h1, h2, h3, h4, h5, h6 {
-    @apply font-display;
+    font-family: "Cal Sans", system-ui, sans-serif;
+    font-weight: 700;
   }
+}
 
-/* --- Component classes --- */
+/* -------------------- Components -------------------- */
 @layer components {
   /* Glass */
-  .glass {
-    @apply bg-white/10 backdrop-blur-lg border border-white/20;
-  }
-  .glass-dark {
-    @apply bg-black/10 backdrop-blur-lg border border-white/10;
-  }
+  .glass      { @apply bg-white/10 backdrop-blur-lg border border-white/20; }
+  .glass-dark { @apply bg-black/10 backdrop-blur-lg border border-white/10; }
 
-  /* Cards */
+  /* Cards (explicit gradients instead of from-/to- utilities) */
   .card-premium {
-    @apply relative overflow-hidden rounded-2xl bg-gradient-to-br from-white/90 to-white/70
-           backdrop-blur-xl border border-white/50 shadow-xl;
+    @apply relative overflow-hidden rounded-2xl backdrop-blur-xl border shadow-xl;
+    border-color: rgba(255,255,255,0.5);
+    background-image: linear-gradient(to bottom right, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
   }
   .card-premium-dark {
-    @apply relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900/90 to-gray-900/70
-           backdrop-blur-xl border border-white/10 shadow-2xl;
+    @apply relative overflow-hidden rounded-2xl backdrop-blur-xl border shadow-2xl;
+    border-color: rgba(255,255,255,0.1);
+    background-image: linear-gradient(to bottom right, rgba(17,24,39,0.9), rgba(17,24,39,0.7)); /* gray-900 */
   }
 
-  /* Gradient text */
+  /* Gradient text (explicit gradient) */
   .gradient-text {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-purple-600;
+    background-image: linear-gradient(90deg, #7916ff 0%, #7c3aed 100%); /* primary-600 → purple-600 */
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
   .gradient-text-yin {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-yin-600 to-yin-800;
+    background-image: linear-gradient(90deg, #6928ff 0%, #4a11ca 100%);  /* yin-600 → yin-800 */
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
   .gradient-text-yang {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-yang-500 to-yang-600;
+    background-image: linear-gradient(90deg, #ff740a 0%, #ff5900 100%);  /* yang-500 → yang-600 */
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
 
-  /* Buttons */
+  /* Buttons (explicit gradient) */
   .btn-premium {
-    @apply relative inline-flex items-center justify-center px-6 py-3
-           font-semibold text-white transition-all duration-300
-           bg-gradient-to-r from-primary-600 to-purple-600
-           rounded-xl shadow-lg hover:shadow-xl hover:scale-105
+    @apply relative inline-flex items-center justify-center px-6 py-3 font-semibold text-white
+           transition-all duration-300 rounded-xl shadow-lg hover:shadow-xl hover:scale-105
            active:scale-100 disabled:opacity-50 disabled:cursor-not-allowed;
+    background-image: linear-gradient(90deg, #7916ff 0%, #7c3aed 100%);
   }
   .btn-glass {
-    @apply relative inline-flex items-center justify-center px-6 py-3
-           font-semibold transition-all duration-300
-           bg-white/10 backdrop-blur-md border border-white/20
-           rounded-xl hover:bg-white/20 active:scale-95;
+    @apply relative inline-flex items-center justify-center px-6 py-3 font-semibold
+           transition-all duration-300 border rounded-xl hover:bg-white/20 active:scale-95;
+    background-color: rgba(255,255,255,0.1);
+    backdrop-filter: blur(12px);
+    border-color: rgba(255,255,255,0.2);
   }
 
   /* Glows */
-  .glow-primary { @apply shadow-[0_0_20px_rgba(132,61,255,0.3)]; }
-  .glow-yin     { @apply shadow-[0_0_20px_rgba(90,21,240,0.3)]; }
-  .glow-yang    { @apply shadow-[0_0_20px_rgba(255,116,10,0.3)]; }
+  .glow-primary { box-shadow: 0 0 20px rgba(132, 61, 255, 0.3); }
+  .glow-yin     { box-shadow: 0 0 20px rgba(90, 21, 240, 0.3); }
+  .glow-yang    { box-shadow: 0 0 20px rgba(255, 116, 10, 0.3); }
 
-  /* Progress */
-  .progress-gradient { @apply bg-gradient-to-r from-primary-500 via-purple-500 to-pink-500; }
-  .progress-yin      { @apply bg-gradient-to-r from-yin-600 to-yin-400; }
-  .progress-yang     { @apply bg-gradient-to-r from-yang-600 to-yang-400; }
+  /* Progress (explicit gradients) */
+  .progress-gradient { background-image: linear-gradient(90deg, #843dff, #a855f7, #ec4899); } /* primary-500 → purple-500 → pink-500 */
+  .progress-yin      { background-image: linear-gradient(90deg, #6928ff, #9b82ff); }
+  .progress-yang     { background-image: linear-gradient(90deg, #ff740a, #ff5900); }
 
-  /* Widget container */
+  /* Widget container (explicit gradients for light/dark) */
   .widget-container {
-    @apply relative overflow-hidden rounded-2xl p-6
-           bg-gradient-to-br from-white/80 to-white/60
-           dark:from-gray-900/80 dark:to-gray-900/60
-           backdrop-blur-xl border border-white/50 dark:border-white/10
-           shadow-xl hover:shadow-2xl transition-all duration-300;
+    @apply relative overflow-hidden rounded-2xl p-6 border shadow-xl transition-all duration-300;
+    background-image: linear-gradient(to bottom right, rgba(255,255,255,0.8), rgba(255,255,255,0.6));
+    backdrop-filter: blur(16px);
+    border-color: rgba(255,255,255,0.5);
+  }
+  :where(.dark) .widget-container {
+    background-image: linear-gradient(to bottom right, rgba(17,24,39,0.8), rgba(17,24,39,0.6)); /* gray-900 */
+    border-color: rgba(255,255,255,0.1);
   }
 
   /* Nav */
   .nav-item {
-    @apply relative flex items-center gap-3 px-4 py-3
-           rounded-xl transition-all duration-200
-           hover:bg-white/10 dark:hover:bg-white/5;
+    @apply relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200;
   }
+  .nav-item:hover { background-color: rgba(255,255,255,0.1); }
+  :where(.dark) .nav-item:hover { background-color: rgba(255,255,255,0.05); }
+
   .nav-item-active {
-    @apply bg-gradient-to-r from-primary-500/20 to-purple-500/20
-           border-l-4 border-primary-500;
+    border-left: 4px solid #843dff; /* primary-500 */
+    background-image: linear-gradient(90deg, rgba(132,61,255,0.2), rgba(168,85,247,0.2)); /* primary-500/20 → purple-500/20 */
   }
 }
 
-/* --- Utilities & misc --- */
+/* -------------------- Utilities & misc -------------------- */
 @layer utilities {
   .text-balance { text-wrap: balance; }
 }
@@ -193,10 +205,20 @@
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-track { @apply bg-gray-100 dark:bg-gray-900; }
-::-webkit-scrollbar-thumb { @apply bg-gradient-to-b from-primary-400 to-purple-400 rounded-full; }
-::-webkit-scrollbar-thumb:hover { @apply from-primary-500 to-purple-500; }
+::-webkit-scrollbar-track { background: #f3f4f6; }                         /* gray-100 */
+:where(.dark) ::-webkit-scrollbar-track { background: #111827; }           /* gray-900 */
+::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background-image: linear-gradient(180deg, #9f75ff, #a78bfa);             /* primary-400 → purple-400 */
+}
+::-webkit-scrollbar-thumb:hover {
+  background-image: linear-gradient(180deg, #843dff, #9333ea);             /* primary-500 → purple-500 */
+}
 
 /* Selection + Focus */
-::selection { @apply bg-primary-500/30 text-primary-900 dark:text-primary-100; }
-:focus { @apply outline-none ring-2 ring-primary-500/50; }
+::selection {
+  background-color: rgba(132,61,255,0.3); /* primary-500/30 */
+  color: #1f1140;
+}
+:where(.dark) ::selection { color: #efe9ff; }
+:focus { outline: none; box-shadow: 0 0 0 2px rgba(132,61,255,0.5); }
