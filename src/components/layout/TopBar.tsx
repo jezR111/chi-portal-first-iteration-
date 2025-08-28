@@ -3,8 +3,8 @@
 
 import { useAuth } from '@/components/providers/AuthProvider'
 import { cn } from '@/lib/utils/cn'
+import { useColorMode } from '@chakra-ui/react'
 import { Bell, Menu, Moon, Search, Sparkles, Sun } from 'lucide-react'
-import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
 
 /**
@@ -15,8 +15,10 @@ export function TopBar() {
   const [isSearchFocused, setIsSearchFocused] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
-  const { theme, setTheme } = useTheme()
   const { user } = useAuth()
+
+  // Chakra color mode
+  const { colorMode, toggleColorMode } = useColorMode()
 
   // Avoid hydration mismatch by only showing theme toggle after mount
   useEffect(() => {
@@ -38,25 +40,29 @@ export function TopBar() {
         {/* Search Bar */}
         <div className="flex flex-1 items-center justify-center px-2 lg:ml-6 lg:justify-start">
           <div className="w-full max-w-lg lg:max-w-xs">
-            <div className={cn(
-              'relative rounded-xl transition-all duration-200',
-              isSearchFocused && 'scale-105'
-            )}>
+            <div
+              className={cn(
+                'relative rounded-xl transition-all duration-200',
+                isSearchFocused && 'scale-105'
+              )}
+            >
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <Search className={cn(
-                  'h-5 w-5 transition-colors',
-                  isSearchFocused 
-                    ? 'text-primary-500' 
-                    : 'text-gray-400 dark:text-gray-500'
-                )} />
+                <Search
+                  className={cn(
+                    'h-5 w-5 transition-colors',
+                    isSearchFocused
+                      ? 'text-primary-500'
+                      : 'text-gray-400 dark:text-gray-500'
+                  )}
+                />
               </div>
               <input
                 className={cn(
                   'block w-full rounded-xl border bg-white/50 py-2 pl-10 pr-3 text-sm placeholder-gray-500 transition-all',
                   'focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20',
                   'dark:bg-gray-900/50 dark:focus:bg-gray-900',
-                  isSearchFocused 
-                    ? 'border-primary-500 shadow-lg shadow-primary-500/10' 
+                  isSearchFocused
+                    ? 'border-primary-500 shadow-lg shadow-primary-500/10'
                     : 'border-gray-200 dark:border-gray-700'
                 )}
                 placeholder="Search chapters, lessons, or community..."
@@ -89,19 +95,19 @@ export function TopBar() {
             <Bell className="h-5 w-5" />
             {/* Notification badge */}
             <span className="absolute right-1.5 top-1.5 flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500"></span>
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
             </span>
           </button>
 
-          {/* Theme Toggle */}
+          {/* Theme Toggle (Chakra) */}
           {mounted && (
             <button
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              onClick={toggleColorMode}
               className="rounded-lg p-2 text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
               aria-label="Toggle theme"
             >
-              {theme === 'dark' ? (
+              {colorMode === 'dark' ? (
                 <Sun className="h-5 w-5" />
               ) : (
                 <Moon className="h-5 w-5" />
